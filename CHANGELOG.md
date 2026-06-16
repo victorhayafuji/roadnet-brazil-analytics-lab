@@ -15,12 +15,16 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 ## [Não lançado]
 
 ### Adicionado
+- Ingestão da malha **não pavimentada** → `raw.raw_dnit_nao_pavimentada`
+  (15.961 linhas).
+- Ingestão do **SNV** (`.xls` via `xlrd`, aba `TABELA SNV`) →
+  `raw.raw_dnit_snv` (7.600 trechos, 20 colunas); `read_dnit_xls` em `io.py` e
+  schema do SNV no DDL/dicionário.
 - `docs/07_arquitetura_e_fluxo.md`: documento técnico do fluxo de engenharia de
   dados (raw → staging → marts) com diagrama Mermaid e mapa código → função.
 
 A ser implementado na sequência da Fase 1 (exercícios learning-first):
 
-- Ingestão da malha não pavimentada e do SNV (`.xls` via `xlrd`).
 - Validações de qualidade da camada raw.
 - Camada staging (padronização de tipos, decimal vírgula→ponto, `segment_key`).
 - Marts e KPIs (extensão por UF/rodovia, trechos críticos).

@@ -56,7 +56,7 @@
 | Data de download | *a preencher* |
 | Período de referência | jul/2024 (`202407a`) |
 | Formato | **Excel binário antigo (.xls)** — ler com `xlrd`, não `openpyxl` |
-| Granularidade | A confirmar após leitura do `.xls` |
+| Granularidade | Trecho SNV (~7.600 linhas, 20 colunas); aba `TABELA SNV`, cabeçalho na 3ª linha |
 | Uso no projeto | Referência da malha federal (Raw → Staging → Dimensões) |
 | Limitações conhecidas | Pode não ser a versão mais recente — verificar antes de fechar a Fase 1 (ver [`06_decision_log.md`](06_decision_log.md)) |
 

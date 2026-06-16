@@ -3,6 +3,23 @@
 > Toda decisão que altere modelagem, fonte, regra de qualidade ou métrica deve
 > ser registrada aqui.
 
+## 2026-06-16 — Schema do SNV descoberto (.xls)
+
+**Decisão:** ler o SNV da aba `TABELA SNV` com `header=2` (as 2 primeiras linhas
+são título/versão/contato) e materializar as **20 colunas** como `text` em
+`raw.raw_dnit_snv` (~7.600 trechos).
+
+**Motivo:** o `.xls` tinha o schema desconhecido e um cabeçalho deslocado; a
+inspeção com `xlrd`/pandas revelou a estrutura (ver `docs/03_data_dictionary.md`).
+
+**Observações:** `Federal Coincidente` traz múltiplos códigos separados por `;`
+(preservado como texto); `Código` (ex.: `010BDF0010`) é o candidato a chave para
+cruzar o SNV com as bases de condição no staging.
+
+**Status:** Fechado (tabela criada e carregada).
+
+---
+
 ## 2026-06-16 — Banco da Fase 1: Supabase (Postgres gerenciado)
 
 **Decisão:** hospedar o banco no **Supabase** (PostgreSQL 17 gerenciado), em vez
