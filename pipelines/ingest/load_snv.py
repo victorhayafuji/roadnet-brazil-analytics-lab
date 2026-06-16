@@ -1,32 +1,69 @@
-"""STUB (exercício manual) — SNV (.xls) -> raw.raw_dnit_snv.
+"""Ingestão do SNV (.xls) -> raw.raw_dnit_snv.
 
-Deixado intencionalmente incompleto (learning-first). O SNV é um Excel BINÁRIO
-antigo (.xls), então a leitura difere dos CSVs:
+O SNV é um Excel BINÁRIO antigo (.xls), lido com `xlrd` (openpyxl não lê .xls).
+A aba de dados é `TABELA SNV`; as 2 primeiras linhas são título/versão/contato e
+o cabeçalho real está na 3ª linha (índice 2), então `header=2`. ~7.601 trechos /
+20 colunas.
 
-  * Use pandas.read_excel(path, engine="xlrd")  — openpyxl NÃO lê .xls.
-  * Inspecione primeiro: nº de abas, qual aba contém os dados, e a linha de
-    cabeçalho real (pode haver linhas de título acima do header).
-  * O schema ainda é DESCONHECIDO: a tabela raw.raw_dnit_snv hoje só tem
-    metadados. Após inspecionar o .xls, acrescente as colunas (todas text) no
-    DDL sql/ddl/01_raw_tables.sql e documente em docs/03_data_dictionary.md.
-  * Verifique a recência: snv_202407a.xls é de jul/2024 — confirmar se há versão
-    mais nova no portal do DNIT antes de fechar a Fase 1 (ver 06_decision_log.md).
+Mesmo padrão das demais cargas: preserva valores como texto, adiciona linhagem,
+TRUNCATE idempotente e carrega na camada raw.
 
-Arquivo: data/raw/dnit/snv/snv_202407a.xls
-
-TODO:
-  1. Ler o .xls com xlrd e descobrir o schema real.
-  2. Atualizar o DDL e o dicionário de dados.
-  3. Carregar em raw.raw_dnit_snv seguindo o padrão de load_pavimentada.py.
+Uso (a partir da raiz do repositório, com a venv ativa):
+    py -3 -m pipelines.ingest.load_snv
 """
 from __future__ import annotations
 
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import text
+
+from pipelines.utils.db import REPO_ROOT, get_engine
+from pipelines.utils.io import read_dnit_xls
+
+SOURCE_PATH = REPO_ROOT / "data" / "raw" / "dnit" / "snv" / "snv_202407a.xls"
+SHEET_NAME = "TABELA SNV"
+HEADER_ROW = 2  # 0-based: linhas 0 e 1 são título/versão/contato
+TARGET_SCHEMA = "raw"
+TARGET_TABLE = "raw_dnit_snv"
+CHUNK_SIZE = 1_000
+
 
 def main() -> int:
-    raise NotImplementedError(
-        "Implemente a leitura do .xls (engine='xlrd') e a carga do SNV "
-        "(ver docstring deste arquivo)."
+    if not SOURCE_PATH.exists():
+        raise FileNotFoundError(
+            f"Arquivo de origem não encontrado: {SOURCE_PATH}\n"
+            "Os dados brutos não são versionados — ver docs/02_data_sources.md."
+        )
+
+    print(f"[load_snv] lendo {SOURCE_PATH.name} (aba '{SHEET_NAME}') ...")
+    df = read_dnit_xls(SOURCE_PATH, sheet_name=SHEET_NAME, header=HEADER_ROW)
+    print(f"[load_snv] {len(df):,} linhas x {df.shape[1]} colunas")
+
+    df["source_file"] = SOURCE_PATH.name
+    df["ingested_at"] = datetime.now(timezone.utc)
+    df["batch_id"] = uuid.uuid4().hex
+
+    engine = get_engine()
+    with engine.begin() as conn:
+        conn.execute(text(f"TRUNCATE TABLE {TARGET_SCHEMA}.{TARGET_TABLE}"))
+
+    df.to_sql(
+        TARGET_TABLE,
+        engine,
+        schema=TARGET_SCHEMA,
+        if_exists="append",
+        index=False,
+        chunksize=CHUNK_SIZE,
+        method="multi",
     )
+
+    with engine.connect() as conn:
+        count = conn.execute(
+            text(f"SELECT count(*) FROM {TARGET_SCHEMA}.{TARGET_TABLE}")
+        ).scalar_one()
+    print(f"[load_snv] OK: {count:,} linhas em {TARGET_SCHEMA}.{TARGET_TABLE}")
+    return 0
 
 
 if __name__ == "__main__":

@@ -61,10 +61,34 @@
 
 ## SNV — `raw.raw_dnit_snv`
 
-Schema **a confirmar** após a primeira leitura do arquivo `.xls`
-(ver stub [`pipelines/ingest/load_snv.py`](../pipelines/ingest/load_snv.py)).
-Atualizar esta seção e o DDL [`sql/ddl/01_raw_tables.sql`](../sql/ddl/01_raw_tables.sql)
-quando as colunas forem conhecidas.
+Aba `TABELA SNV` do `.xls`; cabeçalho real na **3ª linha** da planilha
+(2 linhas de título/versão/contato acima). ~7.600 trechos / 20 colunas.
+
+| Original | Raw (snake_case) | Padronizado (staging) | Tipo | Descrição | Regra |
+|---|---|---|---|---|---|
+| `BR` | `br` | `road_br` | text | Número da BR (ex.: `010`) | 3 dígitos |
+| `UF` | `uf` | `state_code` | text | UF | 2 caracteres |
+| `Tipo de trecho` | `tipo_de_trecho` | `segment_type` | text | Ex.: Eixo Principal | Domínio conhecido |
+| `Desc Coinc` | `desc_coinc` | `coincidence_desc` | text | Descrição de coincidência | — |
+| `Código` | `codigo` | `snv_code` | text | Código SNV do trecho (ex.: `010BDF0010`) | Chave do trecho SNV |
+| `Local de Início` | `local_de_inicio` | `start_location` | text | Descrição do início | — |
+| `Local de Fim` | `local_de_fim` | `end_location` | text | Descrição do fim | — |
+| `km inicial` | `km_inicial` | `km_start` | numeric | Km inicial | decimal com ponto |
+| `km final` | `km_final` | `km_end` | numeric | Km final | decimal com ponto |
+| `Extensão` | `extensao` | `length_km` | numeric | Extensão do trecho | `= km_end - km_start` |
+| `Superfície Federal` | `superficie_federal` | `federal_surface` | text | Superfície (federal) | ex.: PAV/DUP/LEN |
+| `Obras` | `obras` | `works` | text | Obras | — |
+| `Federal Coincidente` | `federal_coincidente` | `federal_coincident` | text | Códigos coincidentes | múltiplos separados por `;` |
+| `Administração` | `administracao` | `administration` | text | Ex.: Convênio Adm. Federal/Estadual | — |
+| `Ato legal` | `ato_legal` | `legal_act` | text | Ato legal | — |
+| `Estadual Coincidente` | `estadual_coincidente` | `state_coincident` | text | Coincidência estadual | — |
+| `Superfície Est. Coincidente` | `superficie_est_coincidente` | `state_coincident_surface` | text | Superfície est. coincidente | — |
+| `Jurisdição` | `jurisdicao` | `jurisdiction` | text | Ex.: Federal | Domínio conhecido |
+| `Superfície` | `superficie` | `surface` | text | Superfície (ex.: PAV) | Domínio conhecido |
+| `Unidade Local` | `unidade_local` | `local_unit` | text | Unidade local do DNIT | — |
+
+> Cruzamento com os levantamentos: `snv_code` / `road_br` + `uf` + faixa de km são
+> os candidatos a chave para ligar o SNV às bases de condição (a definir no staging).
 
 ## Notas importantes
 
