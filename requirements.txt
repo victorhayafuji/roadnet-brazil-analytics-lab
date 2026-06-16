@@ -1,0 +1,10 @@
+# RoadNet Brazil Analytics Lab — dependências da Fase 1
+# Instalar dentro de uma venv criada com `py -3 -m venv .venv` (ver README / tasks.ps1).
+
+pandas>=2.2          # leitura/manipulação tabular
+xlrd>=2.0            # leitura de .xls binário antigo (SNV) — openpyxl NÃO lê .xls
+openpyxl>=3.1        # leitura de .xlsx (uso futuro)
+SQLAlchemy>=2.0      # engine de conexão ao PostgreSQL
+psycopg[binary]>=3.2 # driver PostgreSQL (dialect psycopg v3)
+python-dotenv>=1.0   # carregar credenciais de .env
+jupyter>=1.0         # notebook de profiling manual

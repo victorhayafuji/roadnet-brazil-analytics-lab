@@ -23,6 +23,10 @@ data/processed/
 *.xls
 *.xlsx
 
+# Exceção: amostras pequenas são versionadas para reprodutibilidade
+!data/sample/
+!data/sample/*.csv
+
 # Power BI
 *.pbix
 

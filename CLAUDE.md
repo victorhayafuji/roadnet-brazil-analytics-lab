@@ -140,6 +140,20 @@ Se a versão mais recente for adotada, registrar a decisão em:
 docs/06_decision_log.md
 ```
 
+### 4.4 Armadilhas conhecidas dos dados (vistoria 2026-06-16)
+
+Detalhes e tratamento em `docs/04_quality_rules.md`. Resumo:
+
+- CSVs `;`-delimitados, **UTF-8 com BOM** (ler com `utf-8-sig`).
+- **Decimal inconsistente na mesma linha:** `ICM` usa vírgula (`51,25`) e
+  `ICM_Unificado` usa ponto (`51.25`). Converter só no staging.
+- Aspas escapadas em `Contrato` (`"""26 00650/2025"""`).
+- Colunas acentuadas/com espaço (`Superfície`, `Data Aval.`).
+- **Schemas divergentes:** pavimentada (24 col / ~209k linhas) ≠ não pavimentada
+  (21 col / ~16k linhas).
+- `Km_Inicial > Km_Final` ocorre por sentido (`C`/`D`) — artefato direcional.
+- O SNV é **`.xls` binário** — ler com `xlrd` (não `openpyxl`).
+
 ---
 
 ## 5. Escopo ativo da Fase 1
@@ -187,8 +201,8 @@ Esses itens pertencem a fases futuras.
 | Camada | Tecnologia recomendada | Observação |
 |---|---|---|
 | Linguagem | Python | Leitura, profiling e carga |
-| Bibliotecas | pandas, openpyxl, sqlalchemy, psycopg | Adicionar conforme necessidade |
-| Banco | PostgreSQL | Base local do projeto |
+| Bibliotecas | pandas, xlrd (.xls), openpyxl (.xlsx), sqlalchemy, psycopg, python-dotenv | `xlrd` é obrigatório para o SNV `.xls`; `openpyxl` não lê `.xls` |
+| Banco | PostgreSQL (Supabase) | Hospedado no Supabase, região São Paulo (ver `docs/06_decision_log.md`); usar Session pooler na porta 5432 |
 | Transformação | SQL modular ou dbt Core | Começar simples; evoluir para dbt |
 | BI | Power BI | Apenas exploração inicial na Fase 1 |
 | Documentação | Markdown | README, dicionário, catálogo e decision log |
@@ -198,10 +212,17 @@ Esses itens pertencem a fases futuras.
 
 ## 7. Estrutura de repositório
 
+> **Layout canônico = estrutura real em disco** (reconciliação 2026-06-16, ver
+> `docs/06_decision_log.md`). Substitui o layout antigo baseado em `src/` e
+> `dbt/roadnet/`.
+
 ```text
 roadnet-brazil-analytics-lab/
 ├── README.md
 ├── CLAUDE.md
+├── requirements.txt
+├── .env.example
+├── tasks.ps1                     # atalhos: Setup / DbInit / IngestPavimentada / Sample
 ├── docs/
 │   ├── 01_project_overview.md
 │   ├── 02_data_sources.md
@@ -210,30 +231,30 @@ roadnet-brazil-analytics-lab/
 │   ├── 05_metrics_catalog.md
 │   └── 06_decision_log.md
 ├── data/
-│   ├── raw/
-│   │   └── dnit/
-│   │       ├── snv/
-│   │       └── condicoes_pavimento/
-│   ├── processed/
-│   └── samples/
+│   ├── raw/                      # dados brutos (NÃO versionados)
+│   │   └── dnit/{snv, condicoes_pavimento}/
+│   ├── external/
+│   └── sample/                   # amostras pequenas (versionadas)
 ├── notebooks/
 │   └── 01_data_profiling.ipynb
-├── src/
+├── pipelines/                    # código Python (antigo src/)
 │   ├── ingest/
-│   │   ├── load_snv.py
-│   │   ├── load_pavimentada.py
-│   │   └── load_nao_pavimentada.py
+│   │   ├── load_pavimentada.py   # ingestão de referência (completa)
+│   │   ├── load_nao_pavimentada.py  # stub (exercício)
+│   │   └── load_snv.py           # stub (exercício)
 │   ├── quality/
-│   │   └── validate_raw_files.py
+│   │   └── validate_raw_files.py # stub (exercício)
 │   └── utils/
-│       └── normalize_columns.py
+│       ├── db.py                 # engine SQLAlchemy a partir de .env
+│       ├── io.py                 # leitura defensiva + normalize_column
+│       └── run_sql.py            # executa arquivos .sql
 ├── sql/
-│   ├── 00_setup/
-│   ├── 01_raw/
-│   ├── 02_staging/
-│   └── 03_marts/
+│   ├── ddl/                      # schemas + tabelas raw
+│   └── analysis/                 # queries de KPI
 ├── dbt/
-│   └── roadnet/
+│   ├── models/{staging, intermediate, marts}/
+│   └── tests/
+├── airflow/                      # orquestração (fase futura — vazio)
 ├── powerbi/
 └── references/
 ```
@@ -577,32 +598,50 @@ A Fase 1 só pode ser considerada concluída quando:
 
 ## 15. Comandos previstos
 
+> Neste ambiente o Python real é `py -3` (3.12). O `python` do PATH pode ser o
+> stub da Windows Store. Após criar a venv, usamos o python dela. O atalho
+> `tasks.ps1` encapsula os comandos abaixo.
+
 ### 15.1 Ambiente Python
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install pandas openpyxl sqlalchemy psycopg[binary] python-dotenv
+```powershell
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+# ou simplesmente:  pwsh ./tasks.ps1 Setup
+# depois: copie .env.example para .env e preencha as credenciais do PostgreSQL
 ```
 
-### 15.2 Profiling
+### 15.2 Banco (camada raw)
 
-```bash
+```powershell
+pwsh ./tasks.ps1 DbInit   # cria schemas raw/staging/marts + tabelas raw
+```
+
+### 15.3 Profiling
+
+```powershell
 jupyter notebook notebooks/01_data_profiling.ipynb
 ```
 
-### 15.3 Carga inicial
+### 15.4 Amostras versionadas
 
-```bash
-python src/ingest/load_snv.py
-python src/ingest/load_pavimentada.py
-python src/ingest/load_nao_pavimentada.py
+```powershell
+pwsh ./tasks.ps1 Sample   # gera data/sample/*_sample.csv
 ```
 
-### 15.4 Validação
+### 15.5 Carga inicial
 
-```bash
-python src/quality/validate_raw_files.py
+```powershell
+pwsh ./tasks.ps1 IngestPavimentada           # referência (completa)
+py -3 -m pipelines.ingest.load_nao_pavimentada   # stub (implementar)
+py -3 -m pipelines.ingest.load_snv               # stub (implementar)
+```
+
+### 15.6 Validação
+
+```powershell
+py -3 -m pipelines.quality.validate_raw_files    # stub (implementar)
 ```
 
 Os comandos podem mudar conforme o projeto evoluir. Toda mudança deve ser registrada no README.
