@@ -14,6 +14,10 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
 ## [Não lançado]
 
+### Adicionado
+- `docs/07_arquitetura_e_fluxo.md`: documento técnico do fluxo de engenharia de
+  dados (raw → staging → marts) com diagrama Mermaid e mapa código → função.
+
 A ser implementado na sequência da Fase 1 (exercícios learning-first):
 
 - Ingestão da malha não pavimentada e do SNV (`.xls` via `xlrd`).

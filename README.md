@@ -61,6 +61,7 @@ seguindo `pipelines/ingest/load_pavimentada.py` como modelo.
 - [`docs/04_quality_rules.md`](docs/04_quality_rules.md) — regras de qualidade
 - [`docs/05_metrics_catalog.md`](docs/05_metrics_catalog.md) — catálogo de métricas
 - [`docs/06_decision_log.md`](docs/06_decision_log.md) — decisões
+- [`docs/07_arquitetura_e_fluxo.md`](docs/07_arquitetura_e_fluxo.md) — arquitetura e fluxo de engenharia de dados (diagrama)
 - [`CLAUDE.md`](CLAUDE.md) — fonte da verdade operacional
 
 ## Observação
