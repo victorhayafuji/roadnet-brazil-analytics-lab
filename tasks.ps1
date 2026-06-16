@@ -14,7 +14,7 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true, Position = 0)]
-    [ValidateSet('Setup', 'DbInit', 'Rls', 'IngestPavimentada', 'Sample')]
+    [ValidateSet('Setup', 'DbInit', 'Rls', 'IngestPavimentada', 'Sample', 'Stage')]
     [string]$Command
 )
 
@@ -52,6 +52,15 @@ switch ($Command) {
         $py = Use-VenvPython
         Write-Host '==> Habilitando Row Level Security nas tabelas raw ...'
         & $py -m pipelines.utils.run_sql 'sql/ddl/02_enable_rls.sql'
+    }
+
+    'Stage' {
+        $py = Use-VenvPython
+        $files = @(Get-ChildItem (Join-Path $Root 'sql\staging\*.sql') |
+            Sort-Object Name | ForEach-Object { $_.FullName })
+        if ($files.Count -eq 0) { Write-Warning 'Nenhum .sql em sql/staging/.'; break }
+        Write-Host "==> Executando staging ($($files.Count) arquivo(s)) ..."
+        & $py -m pipelines.utils.run_sql @files
     }
 
     'IngestPavimentada' {
