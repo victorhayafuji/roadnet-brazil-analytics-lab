@@ -111,9 +111,9 @@ flowchart TD
    fazer `cast` numérico, mapear `'ND'`→`NULL`, padronizar UF/rodovia, tratar
    `km_inicial>km_final` (artefato de sentido) e criar a `segment_key`.
 
-**O que já roda:** Extract + Load da malha **pavimentada** (209.204 linhas em
-`raw`). **O que falta:** cargas da não pavimentada e do SNV, validações de
-qualidade, e as camadas staging → marts → KPIs.
+**O que já roda:** Load das 3 bases na `raw` e **staging da pavimentada**
+(`staging.stg_dnit_pavimentada`, tipada). **O que falta:** staging da não
+pavimentada e do SNV (replicação), validações de qualidade, marts e KPIs.
 
 ## 5. Decisões de engenharia e o porquê
 
@@ -139,11 +139,11 @@ Resumo (detalhe e datas em [`06_decision_log.md`](06_decision_log.md)):
 | Item | Status |
 |---|---|
 | Ambiente, conexão, DDL, RLS | ✅ |
-| Extract + Load — malha pavimentada (raw) | ✅ 209.204 linhas |
-| Load — não pavimentada e SNV (`.xls`) | ⏳ stub |
+| Load — pavimentada, não pavimentada e SNV (raw) | ✅ 209.204 / 15.961 / 7.600 |
+| Staging — pavimentada (referência) | ✅ `stg_dnit_pavimentada` |
+| Staging — não pavimentada e SNV | ⏳ replicar |
 | Validações de qualidade (raw) | ⏳ stub |
 | Profiling manual | ⏳ scaffold em `notebooks/` |
-| Staging (tipos, decimal, `segment_key`) | ⏳ |
 | Marts + KPIs (`sql/analysis/`, dbt) | ⏳ |
 
 Alinhado à seção `[Não lançado]` do [`CHANGELOG.md`](../CHANGELOG.md).

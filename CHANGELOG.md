@@ -22,11 +22,15 @@ e o projeto adota [Versionamento Semântico](https://semver.org/lang/pt-BR/).
   schema do SNV no DDL/dicionário.
 - `docs/07_arquitetura_e_fluxo.md`: documento técnico do fluxo de engenharia de
   dados (raw → staging → marts) com diagrama Mermaid e mapa código → função.
+- **Staging (referência)**: `staging.stg_dnit_pavimentada` (tipos, decimal
+  vírgula→ponto, `ND`→NULL, `segment_length_km`, `segment_key`) e comando
+  `tasks.ps1 Stage`.
 
 A ser implementado na sequência da Fase 1 (exercícios learning-first):
 
 - Validações de qualidade da camada raw.
-- Camada staging (padronização de tipos, decimal vírgula→ponto, `segment_key`).
+- Staging da **não pavimentada** e do **SNV** (replicar o padrão de
+  `stg_dnit_pavimentada`).
 - Marts e KPIs (extensão por UF/rodovia, trechos críticos).
 
 ## [0.1.0] - 2026-06-16
