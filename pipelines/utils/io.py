@@ -53,3 +53,30 @@ def read_dnit_csv(path: str | Path) -> pd.DataFrame:
     )
     df.columns = [normalize_column(c) for c in df.columns]
     return df
+
+
+def read_dnit_xls(
+    path: str | Path,
+    sheet_name: str,
+    header: int = 0,
+) -> pd.DataFrame:
+    """Lê uma aba de um Excel binário antigo (.xls) preservando texto.
+
+    O SNV é `.xls` binário (engine `xlrd`; `openpyxl` não lê). A aba de dados
+    (`TABELA SNV`) tem linhas de título/versão/contato acima do cabeçalho real,
+    então `header` aponta a linha (0-based) onde estão os nomes das colunas.
+
+    - engine="xlrd"          formato .xls binário
+    - dtype=str / na_filter=False  nada é inferido; células vazias viram ''
+    """
+    df = pd.read_excel(
+        path,
+        sheet_name=sheet_name,
+        engine="xlrd",
+        header=header,
+        dtype=str,
+        keep_default_na=False,
+        na_filter=False,
+    )
+    df.columns = [normalize_column(str(c)) for c in df.columns]
+    return df

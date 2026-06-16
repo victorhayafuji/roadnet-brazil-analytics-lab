@@ -74,14 +74,34 @@ CREATE TABLE raw.raw_dnit_nao_pavimentada (
     batch_id                text
 );
 
--- 3) SNV — Sistema Nacional de Viação (.xls). Schema a confirmar após a
---    primeira leitura do arquivo binário (ver docs/03_data_dictionary.md e o
---    stub pipelines/ingest/load_snv.py). Mantida mínima até o profiling do .xls.
+-- 3) SNV — Sistema Nacional de Viação (.xls binário, aba "TABELA SNV").
+--    Schema descoberto na vistoria (ver docs/06_decision_log.md): o cabeçalho
+--    real está na 2ª linha da aba; 20 colunas de origem (~7.601 trechos).
+--    Todas TEXT — a raw preserva os valores como vieram.
 DROP TABLE IF EXISTS raw.raw_dnit_snv;
 CREATE TABLE raw.raw_dnit_snv (
-    -- colunas de origem serão adicionadas após inspeção do .xls;
-    -- por ora apenas metadados de linhagem garantem a tabela existente.
-    source_file             text,
-    ingested_at             timestamptz,
-    batch_id                text
+    br                          text,
+    uf                          text,
+    tipo_de_trecho              text,
+    desc_coinc                  text,
+    codigo                      text,
+    local_de_inicio             text,
+    local_de_fim                text,
+    km_inicial                  text,
+    km_final                    text,
+    extensao                    text,
+    superficie_federal          text,
+    obras                       text,
+    federal_coincidente         text,
+    administracao               text,
+    ato_legal                   text,
+    estadual_coincidente        text,
+    superficie_est_coincidente  text,
+    jurisdicao                  text,
+    superficie                  text,
+    unidade_local               text,
+    -- metadados de linhagem
+    source_file                 text,
+    ingested_at                 timestamptz,
+    batch_id                    text
 );
