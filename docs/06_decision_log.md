@@ -3,6 +3,28 @@
 > Toda decisão que altere modelagem, fonte, regra de qualidade ou métrica deve
 > ser registrada aqui.
 
+## 2026-06-16 — Camada staging: padrão e decisões (pavimentada)
+
+**Decisão:** materializar a staging como **tabela** (`CREATE TABLE AS`, idempotente)
+e concentrar nela todas as correções. `staging.stg_dnit_pavimentada` é a
+**referência** a ser replicada para as demais bases.
+
+**Regras aplicadas:**
+- decimal **vírgula→ponto** antes do cast numérico (`replace(col, ',', '.')`);
+- `'ND'` (ausência) → `NULL` nos campos categóricos; strings vazias → `NULL`;
+- `state_code` em maiúsculas; aspas escapadas removidas de `contract_code`;
+- `segment_length_km = abs(km_end - km_start)` — resolve o `km` invertido por
+  sentido (C/D) garantindo extensão não negativa;
+- `segment_key = state_code-road_code-km_start-km_end-direction`.
+
+**Validação:** 209.204 linhas, tipos corretos, decimal convertido, 0 comprimentos
+negativos. A `segment_key` ainda pode ter duplicatas (alerta) — investigar.
+
+**Status:** Fechado para a pavimentada; não pavimentada e SNV ficam como
+replicação (learning-first).
+
+---
+
 ## 2026-06-16 — Schema do SNV descoberto (.xls)
 
 **Decisão:** ler o SNV da aba `TABELA SNV` com `header=2` (as 2 primeiras linhas
